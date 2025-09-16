@@ -16,6 +16,12 @@ let series_data = [];
 let downloadHelper = null;
 let downloadQueue = [];
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 // const splitAt = (index, xs) => [xs.slice(0, index), xs.slice(index)];
 const regex_entry = /<tr>\n\s+<td><a href="([^"]+)">([^<]+)<\/a><\/td>\n\s+<td class="filesize">\d+<\/td>\n\s+<\/tr>/g;
 
@@ -83,8 +89,10 @@ async function fetch_movie_data() {
 
     console.log("Fetched movie and series list.");
 }
-
-fetch_movie_data();
+(async () => {
+    await sleep(5000);
+    fetch_movie_data();
+})();
 
 function tryToStartDownload() {
     wss.clients.forEach((ws) => {
