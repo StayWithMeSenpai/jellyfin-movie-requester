@@ -109,7 +109,7 @@ function tryToStartDownload() {
         }));
     });
     if (downloadHelper == null && downloadQueue.length > 0) {
-        let filePath = "./shared/" + downloadQueue[0].replace(/^tvs\//, "Shows/").replace(/^movies\//, "Movies/");;
+        let filePath = "./shared/" + decodeURIComponent(downloadQueue[0].replace(/^tvs\//, "Shows/").replace(/^movies\//, "Movies/"));
         let dirPath = path.dirname(filePath);
 
         try {
@@ -120,6 +120,7 @@ function tryToStartDownload() {
 
         downloadHelper = new DownloaderHelper(website + downloadQueue[0], dirPath, {
             retry: { maxRetries: 3, delay: 500 },
+            fileName: decodeURIComponent(path.basename(filePath)),
             resumeIfFileExists: true,
             progressThrottle: 100
         });
