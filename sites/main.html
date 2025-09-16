@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Browser</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .tab-button.active {
+            border-bottom: 2px solid #4f46e5;
+            color: #4f46e5;
+        }
+
+        .media-item.selected {
+            background-color: #e0e7ff;
+            /* light blue */
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body class="p-6 md:p-10 flex items-center justify-center min-h-screen">
+    <!-- Main layout container -->
+    <div class="flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6 w-full max-w-7xl">
+        <!-- Column 1: Tabs & Main Media List -->
+        <div class="flex-1 flex flex-col space-y-4">
+            <!-- Tabs -->
+            <div class="flex space-x-4 border-b border-gray-300">
+                <button id="moviesTab"
+                    class="tab-button px-4 py-2 font-medium text-lg text-gray-500 hover:text-gray-700 transition duration-300 active">Movies</button>
+                <button id="seriesTab"
+                    class="tab-button px-4 py-2 font-medium text-lg text-gray-500 hover:text-gray-700 transition duration-300">Series</button>
+            </div>
+
+            <!-- Left Panel: Search & List -->
+            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col space-y-4 h-96 lg:h-[600px]">
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Search"
+                        class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5"
+                        fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd"
+                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div id="mediaList" class="flex-1 overflow-y-auto space-y-2">
+                    <!-- Media items will be injected here by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrow 1 -->
+        <div class="hidden lg:flex items-center justify-center">
+            <svg class="h-8 w-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                    d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
+                    clip-rule="evenodd"></path>
+            </svg>
+        </div>
+
+        <!-- Column 2: Seasons List (for series) -->
+        <div id="seasonsPanel" class="flex-1 flex-col space-y-4 hidden lg:flex">
+            <div class="h-6"></div>
+            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col space-y-4 h-96 lg:h-[600px]">
+                <h3 class="text-lg font-semibold text-gray-800 border-b pb-2">Seasons</h3>
+                <div id="seasonsList" class="flex-1 overflow-y-auto space-y-2">
+                    <div class="text-center text-gray-400 p-4">Select a series to see seasons.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrow 2 -->
+        <div id="arrowToLanguages" class="hidden lg:flex items-center justify-center">
+            <svg class="h-8 w-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                    d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
+                    clip-rule="evenodd"></path>
+            </svg>
+        </div>
+
+        <!-- Column 3: Languages & Qualities List -->
+        <div class="flex-none lg:w-1/3 flex flex-col space-y-4">
+            <div class="h-6"></div>
+            <div id="languageQualityPanel"
+                class="bg-white rounded-xl shadow-lg p-6 flex flex-col space-y-4 h-96 lg:h-[600px]">
+                <h3 class="text-lg font-semibold text-gray-800 border-b pb-2">Languages & Quality</h3>
+                <div id="languageQualityList" class="flex-1 overflow-y-auto space-y-2">
+                    <div class="text-center text-gray-400 p-4">Select a media item.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrow 3 -->
+        <div class="hidden lg:flex items-center justify-center">
+            <svg class="h-8 w-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                    d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
+                    clip-rule="evenodd"></path>
+            </svg>
+        </div>
+
+        <!-- Column 4: Actions -->
+        <div class="flex-1 flex flex-col space-y-6">
+            <div class="h-6"></div>
+            <!-- Top Right Panel: Details/Placeholder -->
+            <div id="detailsPanel" class="bg-white rounded-xl shadow-lg p-6 flex flex-col space-y-4 h-96 lg:h-[300px]">
+                <div class="text-center text-gray-400 p-4">Select a language & quality option to download.</div>
+            </div>
+
+            <!-- Bottom Right Panel: Actions -->
+            <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col space-y-4 h-auto lg:h-48">
+                <button id="downloadButton"
+                    class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-700 transition duration-300 w-full">Download</button>
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="settingCheckbox"
+                        class="form-checkbox h-5 w-5 text-indigo-600 rounded-md">
+                    <label for="settingCheckbox" class="text-gray-700">Setting</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download Jobs Panel -->
+    <div id="downloadsPanel"
+        class="fixed bottom-0 left-0 right-0 bg-white rounded-t-xl shadow-2xl p-4 md:p-6 transition-transform transform translate-y-full">
+        <div class="flex items-center justify-between cursor-pointer" id="downloadsHeader">
+            <h2 class="text-lg font-semibold">Download Jobs</h2>
+            <svg id="toggleIcon" class="w-6 h-6 text-gray-600 transition-transform transform rotate-180" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </div>
+        <div id="downloadsList" class="mt-4 flex flex-row space-x-4 overflow-x-auto p-2">
+            <!-- Download jobs will be added here -->
+        </div>
+    </div>
+
+    <script>
+        // Data structure with a unique ID for each media item to simulate fetching
+        const moviesData = []/*movie-data*/;
+
+        const seriesData = []/*series-data*/;
+
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.hostname}:${window.location.port ?? 8080}`;
+
+        const moviesTab = document.getElementById('moviesTab');
+        const seriesTab = document.getElementById('seriesTab');
+        const searchInput = document.getElementById('searchInput');
+        const mediaList = document.getElementById('mediaList');
+        const seasonList = document.getElementById('seasonsList');
+        const languageQualityList = document.getElementById('languageQualityList');
+        const downloadButton = document.getElementById('downloadButton');
+        const downloadsPanel = document.getElementById('downloadsPanel');
+        const downloadsHeader = document.getElementById('downloadsHeader');
+        const downloadsList = document.getElementById('downloadsList');
+
+        let currentMedia = moviesData;
+        const cache = {}; // Cache object for storing fetched data
+        let abortController = new AbortController();
+        let selectedMediaTitle = null;
+        let selectedSeason = null;
+        let selectedLanguageQualities = [];
+        let isMovie = true;
+
+        document.getElementById("seasonsPanel").style.display = "none";
+        document.getElementById("arrowToLanguages").style.display = "none";
+
+        let downloadProgress = {};
+
+        function fancyTimeFormat(duration) {
+            // Hours, minutes and seconds
+            const hrs = ~~(duration / 3600);
+            const mins = ~~((duration % 3600) / 60);
+            const secs = ~~duration % 60;
+
+            // Output like "1:01" or "4:03:59" or "123:03:59"
+            let ret = "";
+
+            if (hrs > 0) {
+                ret += "" + hrs + ":" + (mins < 10 ? "0" : "");
+            }
+
+            ret += "" + mins + ":" + (secs < 10 ? "0" : "");
+            ret += "" + secs;
+
+            return ret;
+        }
+
+        function displayProgress() {
+            if (downloadProgress.progress != undefined) {
+                const progressEl = document.getElementById(`progress-main`);
+                progressEl.style.width = `${downloadProgress.progress}%`;
+
+                const progressTxt = document.getElementById('progress-text');
+                progressTxt.innerText = fancyTimeFormat(downloadProgress.remainingTime);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            function connect() {
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                    console.log('Connected to WebSocket server');
+                };
+
+                ws.onmessage = (event) => {
+                    console.log('Message from server:', event.data);
+
+                    let data = JSON.parse(event.data);
+
+                    if (data.type == "status") {
+                        downloadProgress = data.data;
+                        displayProgress();
+                    }
+
+                    if (data.type == "downloads") {
+                        downloadsList.innerHTML = '';
+                        let downloads = data.data;
+                        if (downloads.length >= 1) {
+                            const jobDiv = document.createElement('div');
+                            jobDiv.id = `job-main`;
+                            jobDiv.className = 'download-item flex-shrink-0 flex items-center space-x-4 bg-gray-100 p-3 rounded-lg shadow-sm';
+                            jobDiv.innerHTML = `
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-medium text-sm text-gray-800">${decodeURIComponent(downloads[0])}</p>
+                                    <div class="mt-1 w-full bg-gray-300 rounded-full h-2.5">
+                                        <div class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%" id="progress-main"></div>
+                                    </div>
+                                    <div class="mt-1">
+                                        <p id="progress-text" class="text-sm text-gray-500"></p>
+                                    </div>
+                                </div>
+                            `;
+                            /*<button class="cancel-button p-1 rounded-full text-gray-500 hover:bg-gray-200 transition duration-300" data-job-id="${jobId}">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>*/
+                            downloadsList.prepend(jobDiv);
+
+                            downloadsPanel.style.transform = 'translateY(0)';
+                        }
+                        if (downloads.length > 1) {
+                            for (let i = 1; i < downloads.length; i++) {
+                                const download = downloads[i];
+                                const jobDiv = document.createElement('div');
+                                jobDiv.id = `job-main`;
+                                jobDiv.className = 'download-item flex-shrink-0 flex items-center space-x-4 bg-gray-100 p-3 rounded-lg shadow-sm';
+                                jobDiv.innerHTML = `
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium text-sm text-gray-800">${decodeURIComponent(downloads[i])}</p>
+                                        <div class="mt-1">
+                                            <p class="text-sm text-gray-500">In queue</p>
+                                        </div>
+                                    </div>
+                                `;
+                                /*<button class="cancel-button p-1 rounded-full text-gray-500 hover:bg-gray-200 transition duration-300" data-job-id="${jobId}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>*/
+                                downloadsList.append(jobDiv);
+                            }
+                        }
+
+
+                    }
+                };
+
+                ws.onclose = (event) => {
+                    console.log('Disconnected from WebSocket server:', event.code, event.reason);
+                    connect();
+                };
+
+                ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    ws.close(); // Close the connection on error to trigger reconnect
+                };
+            }
+            connect();
+        });
+
+        function fetchFirstLevelDataForMedia(mediaId, signal) {
+            return new Promise((resolve, reject) => {
+                let doResolve = true;
+                // Handle cancellation
+                signal.addEventListener('abort', () => {
+                    doResolve = false;
+                    let error = new Error('Request aborted');
+                    error.name = "AbortError"
+                    reject(error);
+                });
+
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.onreadystatechange = function () {
+                    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                        const data = JSON.parse(xmlHttp.responseText);
+                        cache[mediaId] = data;
+                        resolve(data);
+                    }
+                }
+                xmlHttp.open("GET", window.location.origin + "/options/" + mediaId, true); // true for asynchronous 
+                xmlHttp.send(null);
+            });
+        }
+
+        function fetchSecondLevelDataForMedia(mediaId, seasonid, signal) {
+            return new Promise((resolve, reject) => {
+                let doResolve = true;
+                // Handle cancellation
+                signal.addEventListener('abort', () => {
+                    doResolve = false;
+                    let error = new Error('Request aborted');
+                    error.name = "AbortError"
+                    reject(error);
+                });
+
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.onreadystatechange = function () {
+                    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                        const data = JSON.parse(xmlHttp.responseText);
+                        cache[mediaId + seasonid] = data;
+                        resolve(data);
+                    }
+                }
+                xmlHttp.open("GET", window.location.origin + "/options/" + mediaId + seasonid, true); // true for asynchronous 
+                xmlHttp.send(null);
+            });
+        }
+
+        // Function to render the combined language and quality list (2nd column)
+        function renderFileNames(id, data) {
+            languageQualityList.innerHTML = '';
+            selectedLanguageQualities = []; // Reset selections for the new media item
+            if (data.length === 0) {
+                languageQualityList.innerHTML = '<div class="text-center text-gray-500 mt-10">No options found.</div>';
+                return;
+            }
+
+            data.forEach(optionText => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'media-item px-4 py-3 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition duration-300';
+                itemDiv.textContent = decodeURIComponent(optionText);
+                itemDiv.addEventListener('click', () => {
+                    const index = selectedLanguageQualities.indexOf(optionText);
+                    if (index > -1) {
+                        // Deselect
+                        selectedLanguageQualities.splice(index, 1);
+                        itemDiv.classList.remove('selected');
+                        itemDiv.classList.remove('bg-gray-200');
+                        itemDiv.classList.add('bg-gray-100');
+                    } else {
+                        // Select
+                        selectedLanguageQualities.push(optionText);
+                        itemDiv.classList.add('selected');
+                        itemDiv.classList.remove('bg-gray-100');
+                        itemDiv.classList.add('bg-gray-200');
+                    }
+                });
+                languageQualityList.appendChild(itemDiv);
+            });
+        }
+
+        function renderSeasons(id, data) {
+            seasonList.innerHTML = ''; // Clear previous items
+            languageQualityList.innerHTML = '<div class="text-center text-gray-400 p-4">Select a season.</div>';
+            selectedSeason = null;
+            if (data.length === 0) {
+                seasonList.innerHTML = '<div class="text-center text-gray-500 mt-10">No results found.</div>';
+                return;
+            }
+            data.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'season-item px-4 py-3 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition duration-300';
+                itemDiv.textContent = decodeURIComponent(item);
+                itemDiv.addEventListener('click', () => {
+                    // Abort previous request if it exists
+                    abortController.abort();
+                    abortController = new AbortController();
+                    const signal = abortController.signal;
+
+                    selectedSeason = item;
+
+                    // Check cache first
+                    if (cache[id + item]) {
+                        console.log('Using cached data for:', id + item);
+                        renderFileNames(item.id, cache[id + item]);
+                    } else {
+                        // Show loading state and fetch from server
+                        languageQualityList.innerHTML = '<div class="text-center text-gray-400 p-4 animate-pulse">Loading...</div>';
+                        fetchSecondLevelDataForMedia(id, item, signal)
+                            .then(fetchedLanguages => {
+                                renderFileNames(item, fetchedLanguages);
+                            })
+                            .catch(error => {
+                                if (error.name === 'AbortError') {
+                                    console.log('Request aborted:', id + item);
+                                } else {
+                                    console.error('Fetch error:', error);
+                                }
+                            });
+                    }
+
+                    // Remove active class from all items in the main list and add to the clicked one
+                    document.querySelectorAll('#seasonsList .season-item').forEach(el => el.classList.remove('bg-gray-200', 'font-semibold'));
+                    itemDiv.classList.add('bg-gray-200', 'font-semibold');
+                });
+                seasonList.appendChild(itemDiv);
+            });
+            // Select the first item by default
+            const firstItem = seasonList.querySelector('.season-item');
+            if (firstItem) {
+                firstItem.click();
+            }
+        }
+
+        // Function to render the main media list (1st column)
+        function renderMedia(data) {
+            mediaList.innerHTML = ''; // Clear previous items
+            languageQualityList.innerHTML = '<div class="text-center text-gray-400 p-4">Select a media item.</div>';
+            selectedMediaTitle = null;
+            if (data.length === 0) {
+                mediaList.innerHTML = '<div class="text-center text-gray-500 mt-10">No results found.</div>';
+                return;
+            }
+            data.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'media-item px-4 py-3 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition duration-300';
+                itemDiv.textContent = item.title;
+                itemDiv.addEventListener('click', () => {
+                    // Abort previous request if it exists
+                    abortController.abort();
+                    abortController = new AbortController();
+                    const signal = abortController.signal;
+
+                    selectedMediaTitle = item.id;
+
+                    // Check cache first
+                    if (cache[item.id]) {
+                        console.log('Using cached data for:', item.id);
+                        if (isMovie) {
+                            renderFileNames(item.id, cache[item.id]);
+                        } else {
+                            renderSeasons(item.id, cache[item.id]);
+                        }
+                    } else {
+                        // Show loading state and fetch from server
+                        seasonList.innerHTML = '<div class="text-center text-gray-400 p-4 animate-pulse">Loading...</div>';
+                        languageQualityList.innerHTML = '<div class="text-center text-gray-400 p-4 animate-pulse">Loading...</div>';
+                        fetchFirstLevelDataForMedia(item.id, signal)
+                            .then(fetchedLanguages => {
+                                if (isMovie) {
+                                    renderFileNames(item.id, fetchedLanguages);
+                                } else {
+                                    renderSeasons(item.id, fetchedLanguages);
+                                }
+                            })
+                            .catch(error => {
+                                if (error.name === 'AbortError') {
+                                    console.log('Request aborted:', item.id);
+                                } else {
+                                    console.error('Fetch error:', error);
+                                }
+                            });
+                    }
+
+                    // Remove active class from all items in the main list and add to the clicked one
+                    document.querySelectorAll('#mediaList .media-item').forEach(el => el.classList.remove('bg-gray-200', 'font-semibold'));
+                    itemDiv.classList.add('bg-gray-200', 'font-semibold');
+                });
+                mediaList.appendChild(itemDiv);
+            });
+            // Select the first item by default
+            const firstItem = mediaList.querySelector('.media-item');
+            if (firstItem) {
+                //firstItem.click();
+            }
+        }
+
+        function addDownloadJob(title) {
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                    const data = JSON.parse(xmlHttp.responseText);
+                    cache[mediaId + seasonid] = data;
+                    resolve(data);
+                }
+            }
+            xmlHttp.open("GET", window.location.origin + "/download/" + title, true); // true for asynchronous 
+            xmlHttp.send(null);
+        }
+
+        // Function to create a new download job element
+        function _addDownloadJob(title) {
+            const jobId = Date.now(); // Simple unique ID
+            const jobDiv = document.createElement('div');
+            jobDiv.id = `job-${jobId}`;
+            jobDiv.className = 'download-item flex-shrink-0 flex items-center space-x-4 bg-gray-100 p-3 rounded-lg shadow-sm';
+            jobDiv.innerHTML = `
+                <div class="flex-1 min-w-0">
+                    <p class="font-medium text-sm text-gray-800">${decodeURIComponent(title.slice(2))}</p>
+                    <div class="mt-1 w-full bg-gray-300 rounded-full h-2.5">
+                        <div class="bg-indigo-600 h-2.5 rounded-full" style="width: 0%" id="progress-${jobId}"></div>
+                    </div>
+                    <div class="mt-1">
+                        <p class="text-sm text-gray-500">In queue</p>
+                    </div>
+                </div>
+            `;
+            /*<button class="cancel-button p-1 rounded-full text-gray-500 hover:bg-gray-200 transition duration-300" data-job-id="${jobId}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>*/
+            downloadsList.prepend(jobDiv);
+
+            // Start the progress simulation
+            let progress = 0;
+            const progressEl = document.getElementById(`progress-${jobId}`);
+            const interval = setInterval(() => {
+                progress += 10;
+                if (progress <= 100) {
+                    progressEl.style.width = `${progress}%`;
+                } else {
+                    clearInterval(interval);
+                    // Optionally, remove the job when complete
+                    setTimeout(() => jobDiv.remove(), 1000);
+                }
+            }, 500);
+
+            downloadJobs[jobId] = interval;
+
+            // Attach event listener for the cancel button
+            /*jobDiv.querySelector('.cancel-button').addEventListener('click', () => {
+                clearInterval(downloadJobs[jobId]);
+                jobDiv.remove();
+            });*/
+
+            // Show the downloads panel
+            downloadsPanel.style.transform = 'translateY(0)';
+        }
+
+        // Handle tab clicks
+        moviesTab.addEventListener('click', () => {
+            isMovie = true;
+            document.getElementById("seasonsPanel").style.display = "none";
+            document.getElementById("arrowToLanguages").style.display = "none";
+            moviesTab.classList.add('active');
+            seriesTab.classList.remove('active');
+            currentMedia = moviesData;
+            renderMedia(currentMedia);
+        });
+
+        seriesTab.addEventListener('click', () => {
+            isMovie = false;
+            document.getElementById("seasonsPanel").style.display = "";
+            document.getElementById("arrowToLanguages").style.display = "";
+            seriesTab.classList.add('active');
+            moviesTab.classList.remove('active');
+            currentMedia = seriesData;
+            renderMedia(currentMedia);
+        });
+
+        // Handle search input
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredData = currentMedia.filter(item =>
+                item.title.toLowerCase().includes(searchTerm)
+            );
+            renderMedia(filteredData);
+        });
+
+        // Handle download button click
+        downloadButton.addEventListener('click', () => {
+            if (selectedMediaTitle && selectedLanguageQualities.length > 0) {
+                selectedLanguageQualities.forEach(option => {
+                    if (isMovie) {
+                        const jobTitle = `${selectedMediaTitle}${option}`;
+                        addDownloadJob(jobTitle);
+                    } else {
+                        const jobTitle = `${selectedMediaTitle}${selectedSeason}${option}`;
+                        addDownloadJob(jobTitle);
+                    }
+                });
+            } else {
+                console.log("Please select a media item and at least one language/quality option.");
+            }
+        });
+
+        // Toggle the download panel
+        downloadsHeader.addEventListener('click', () => {
+            if (downloadsPanel.style.transform === 'translateY(0px)') {
+                downloadsPanel.style.transform = 'translateY(100%)';
+            } else {
+                downloadsPanel.style.transform = 'translateY(10%)';
+            }
+        });
+
+
+        // Initial render
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMedia(moviesData);
+        });
+    </script>
+</body>
+
+</html>
