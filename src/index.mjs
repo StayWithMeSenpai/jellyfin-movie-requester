@@ -99,6 +99,9 @@ async function fetch_movie_data() {
 (async () => {
     await sleep(5000);
     fetch_movie_data();
+    setInterval(() => {
+        fetch_movie_data();
+    }, 5 * 60 * 1000)
 })();
 
 function tryToStartDownload() {
