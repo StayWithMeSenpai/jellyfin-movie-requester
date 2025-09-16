@@ -57,6 +57,9 @@ async function fetch_movie_data() {
 
         movie_data = n_movie_data;
     } catch (error) {
+        setTimeout(() => {
+            fetch_movie_data();
+        }, 5000);
         console.error(error);
     }
 
@@ -84,6 +87,10 @@ async function fetch_movie_data() {
 
         series_data = n_series_data;
     } catch (error) {
+        setTimeout(() => {
+            fetch_movie_data();
+        }, 5000);
+        
         console.error(error);
     }
 
